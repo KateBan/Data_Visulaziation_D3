@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>How Acids in Red and White Wines Affect the Quality</title>
+  <link rel="stylesheet" href="main.css">
+  <script  type="text/javascript" src="d3.js"></script>
+  <script src="d3.legend.js"></script>
+</head>
+<body>
+<!--Place all DOM elements here -->
+<script>
+//Setting up the plotting environment
+var w = 900;
+var h = 550;
+var margin = {
+  top: 50,
+  bottom: 60,
+  left: 60,
+  right: 60
+};
+var width = w - margin.left - margin.right;
+var height = h - margin.top - margin.bottom;
+d3.select("body")
+  .append("h2")
+  .text("How Acids in Red and White Wines Affect the Quality");
+
+d3.select("body")
+  .append("h5")
+  .text("Hover over the scatterplot to see the difference between the two acids, and for full effect! The diamonds represent the Citric Acid while the crosses depict the Volatile Acid.")
+  .style("font-size","12px");  
+
+var svg = d3.select("body")
+            .append("svg")
+            .attr("id", "chart")
+            .attr("width", w)
+            .attr("height", h);
+    
+var chart = svg.append("g")
+               .classed("display", true)
+               .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+var coloring = d3.scale.category20b()
+                .range(["#843c39", "#e7cb94"]);   
+
+var x = d3.scale.linear()
+          .domain([10,1])
+          .range([width,0]);
+
+var y = d3.scale.linear()
+          .domain([1.0,0])
+          .range([0,height]);   
+    
+
+var xAxis = d3.svg.axis()
+              .scale(x)
+              .orient("bottom");
+var xGridLines = d3.svg.axis()
+                   .scale(x)
+                   .tickSize(-height,-height)
+                   .tickFormat("")
+                   .orient("bottom");
+
+var yAxis = d3.svg.axis()
+              .scale(y)
+              .orient("left");
+
+var yGridLines = d3.svg.axis()
+                   .scale(y)
+                   .tickSize(-width,0,0)
+                   .tickFormat("")
+                   .orient("left");
+
+var diamond = d3.svg.symbol()
+                .type('diamond')
+                .size(400)(),
+    cross = d3.svg.symbol()
+              .type('cross')
+              .size(500)();
+
+var symbolScale = d3.scale.ordinal()
+                    .range([diamond, cross]);
+
+
+//Custom function to draw the axis and the gridlines
+function drawAxis(params){
+  if(params.initialize) {
+    this.append("g")
+        .classed("gridline x ", true)
+        .attr("transform", "translate(0," + height + ")")
+        .call(params.axis.gridlines.x);
+     this.append("g")
+       .classed("gridline y", true)
+       .attr("transform", "translate(0,0)")
+       .call(params.axis.gridlines.y);
+    this.append("g")
+       .classed("axis x", true)
+       .attr("transform", "translate(0," + height +")")
+       .call(params.axis.x);
+    this.append("g")
+       .classed("axis y", true)
+       .attr("transform", "translate(0,0)")
+       .call(params.axis.y);
+    this.select(".y.axis")
+        .append("text")
+        .classed("y axis-label", true)
+        .attr("transform", "translate(" + -46 + ","+ height/2 + ") rotate(-90)")
+        .text("Median Value of Volatile Acid (cross) and Citric Acids (diamond) - (g/dm^3)")
+    this.select(".x.axis")
+        .append("text")
+        .classed("x axis-label", true)
+        .attr("transform", "translate("+ width/2 + ", "+ 48 + ")")
+        .text("Quality Range (1=Low, 10=High)")
+    this.append("g")
+        .append("text")
+        .classed("chart-header", true)
+        .attr("transform", "translate(0,-20)")
+        .text("") 
+  }
+   
+}
+//Custom plot function to draw the chart
+function plot(params){
+  drawAxis.call(this, params);
+  coloring.domain(params.data.map(function(d){
+      return d.colors
+  }));
+  symbolScale.domain(params.data.map(function(d){
+      return d.acids
+  }));
+  var self = this;
+  var acids = d3.keys(params.data[0]).filter(function(d){
+    return  d !== "quality" && d !== "colors" && d !== "" && d !== "X";
+  });
+ 
+  // enter() for <g>
+  this.selectAll(".acid")
+      .data(acids)
+      .enter()
+         .append("g")
+         .attr("class", function(d){ 
+             return d; 
+         })
+         .classed("acid", true)
+        
+         
+         
+  //update for <g>
+  this.selectAll(".acid")
+      .on("mouseover", function(d,i){
+        d3.select(this)
+        .transition()
+            .style("opacity", 1)
+
+      })
+      .on("mouseout", function(d,i){
+        d3.select(this)
+            .transition()
+            .style("opacity", 0.3)
+      });
+ 
+  acids.forEach(function(acid) {
+    var g = self.selectAll("g." +acid);
+    var arr = params.data.map(function(d){
+      return {
+        acids: acid,
+        value: d[acid],
+        quality: d.quality,
+        colors: d.colors
+
+      };
+
+    });
+    //enter()
+    g.selectAll(".colors")
+         .data(arr)
+         .enter()
+            .append("path")
+            .classed("colors", true)
+            .attr("d", function(d){
+             return symbolScale(d.acids)
+           })
+            .attr("transform", function(d) {
+            return "translate(" + x(d.quality) + 
+                            "," + y(d.value) + ")";
+           })
+            .attr('data-legend', function (d) {
+              return (d.colors) + " "  + " wine"
+            })
+           
+    //update()
+    g.selectAll(".colors")
+        .style("fill", function(d,i){
+        return coloring(d.colors);
+        })
+        .on("mouseover", function(d,i){
+          var str = d.acids + " acid median value: " + " ";
+          str += d.value + " (g/dm^3) for ";
+          str += d.colors + " wine";
+          str += " with " + "quality rating " + d.quality + ". ";
+          d3.select(".chart-header").text(str);
+
+        })
+        .on("mouseout", function(d,i){
+          d3.select(".chart-header").text("");
+
+        })    
+
+    //exit()
+    g.selectAll(".colors")
+        .data(arr)
+        .exit()
+        .remove();
+  });
+
+
+    legend = svg.append("g")
+                .attr("class","legend")
+                .attr("transform","translate(760,23)")
+                .style("font-size","12px")
+                .call(d3.legend);
+
+
+}
+
+d3.csv("wineAcids.csv", function(error, parsed_data){
+  plot.call(chart, {
+  data: parsed_data, 
+  axis: {
+    x: xAxis,
+    y: yAxis,
+    gridlines :{
+      x: xGridLines,
+      y: yGridLines
+
+    }
+
+  },
+  initialize: true
+})
+
+})
+
+</script>
+</body>
+</html>

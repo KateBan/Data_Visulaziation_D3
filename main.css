@@ -1,0 +1,57 @@
+body,html{
+	margin: 0;
+	padding: 0;
+	font-family: "Arial", sans-serif;
+	font-size: 0.95em;
+	text-align: center;
+}
+#chart{
+	background-color: #fff;
+	border: 1px solid #CCC;
+}
+
+.axis path,
+.axis line{
+	fill: none;
+	stroke: #000;
+	shape-rendering: crispEdges;
+}
+.gridline path,
+.gridline line{
+	fill: none;
+	stroke: #ccc;
+	shape-rendering: crispEdges;
+}
+.area{
+	opacity: 0.25;
+	fill: #fff;
+	stroke: #fff;
+	stroke-width: 1px;
+}
+.acid{
+	opacity: 0.3;
+}
+.axis-label{
+	text-anchor: middle;
+}
+.chart-header{
+	font-size: 125%;
+	
+}
+
+h2 {
+    text-align: center;
+    color: black;
+}
+
+.legend rect {
+  fill:white;
+  stroke:black;
+  opacity:0.5;
+
+}
+
+.legend-items {
+	text-transform: capitalize;
+}
+
